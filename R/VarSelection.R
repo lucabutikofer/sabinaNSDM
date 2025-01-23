@@ -140,17 +140,20 @@ NSDM.SelectCovariates <- function(nsdm_finput,
 
   SpeciesName <- nsdm_finput$Species.Name
 
+  cat("Processing global dataset \n")
   selected_global <- select_cov(nsdm_finput, scale = "Global",
                                 ClimaticVariablesBands,
                                 maxncov.Global, corcut, algorithms,
                                 save.output)
 
+  cat("Processing regional dataset \n")
   selected_regional <- select_cov(nsdm_finput, scale = "Regional",
                                   ClimaticVariablesBands,
                                   maxncov.Regional, corcut, algorithms,
                                   save.output,
                                   selected_global$Selected.Variables)
 
+  cat("Updating input covariates \n")
   main_summary <- rbind(selected_global$Summary,
                         selected_regional$Summary)
 
@@ -160,7 +163,9 @@ NSDM.SelectCovariates <- function(nsdm_finput,
   sabina$IndVar.Regional.Selected <- selected_regional$IndVar.Selected
   sabina$IndVar.Global.Selected.reg <- selected_regional$IndVar.Global.Selected.reg
   sabina$Summary <- main_summary
+  
   # Make the output lighter
+  cat("Removing unnecessary data \n")
   sabina <- sabina[!names(sabina) %in% c("IndVar.Regional", "IndVar.Global")]
 
   attr(sabina, "class") <- "nsdm.vinput"
@@ -271,11 +276,11 @@ select_cov <- function(nsdm_finput, scale, ClimaticVariablesBands,
 
   }
 
-  select_list <- list(IndVar.Selected = terra::wrap(IndVar.Selected),
+  select_list <- list(IndVar.Selected = terra::wrap(IndVar.Selected, proxy=TRUE),
                       Selected.Variables = Selected.Variables,
                       Summary = summary)
   if(scale == "Regional"){
-      select_list$IndVar.Global.Selected.reg <- terra::wrap(IndVar.Global.Selected.reg)
+      select_list$IndVar.Global.Selected.reg <- terra::wrap(IndVar.Global.Selected.reg, proxy=TRUE)
   }
 
   return(select_list)
