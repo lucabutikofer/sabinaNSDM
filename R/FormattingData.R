@@ -103,7 +103,8 @@ NSDM.FormattingData <- function(nsdm_input,
                                 Min.Dist.Global="resolution",
                                 Min.Dist.Regional="resolution",
                                 Background.method="random",
-                                save.output=TRUE) {
+                                save.output=TRUE,
+                                big.data=TRUE) {
 
   if(!inherits(nsdm_input, "nsdm.input")){
       stop("nsdm_input must be an object of nsdm.input class. Consider running NSDM.InputData() function")
@@ -135,10 +136,10 @@ NSDM.FormattingData <- function(nsdm_input,
 
   format_global <- gen_background_pts(nsdm_input, "Global",
                                       Background.method, nPoints, Min.Dist.Global,
-                                      save.output)
+                                      save.output, big.data)
   format_regional <- gen_background_pts(nsdm_input, "Regional",
                                         Background.method, nPoints, Min.Dist.Regional,
-                                        save.output)
+                                        save.output, big.data)
 
   main_summary <- rbind(format_global$Summary,
                         format_regional$Summary[-1, , drop = FALSE])
@@ -261,7 +262,7 @@ background_stratified <- function(expl.var, nPoints) {
 
 gen_background_pts <- function(nsdm_input, scale,
                                Background.method, nPoints, Min.Dist,
-                               save.output){
+                               save.output, big.data){
 
   if(!(scale %in% c("Global", "Regional"))){
     stop("scale must be either Global or Regional")
@@ -274,9 +275,14 @@ gen_background_pts <- function(nsdm_input, scale,
 
   # Generate random background points for model calibration
   # Covariates (environmental layers)
-  IndVar <- IndVar[[names(IndVar)]]
-  Mask <- prod(IndVar)
-  IndVar <- terra::mask(IndVar, Mask)
+  if(big.data) {
+    IndVar <- IndVar[[names(IndVar)]]
+    Mask <- IndVar[[1]]
+  } else {
+    IndVar <- IndVar[[names(IndVar)]]
+    Mask <- prod(IndVar)
+    IndVar <- terra::mask(IndVar, Mask)
+    }
 
   background_scale <- nsdm_input[[paste0("Background.", scale, ".0")]]
   absences_scale <- nsdm_input[[paste0("Absences.", scale)]]
